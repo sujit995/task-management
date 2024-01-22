@@ -1,95 +1,79 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client"
+import Link from 'next/link'
+import TaskCard from './components/TaskCard'
+import { child, get, ref } from 'firebase/database';
+import { db } from '../firebase';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
+  const [tasksList, setTasksList] = useState({
+    "todo": {},
+    "in_progress": {},
+    "done": {}
+  });
+
+  const getTasksList = () => {
+    get(child(ref(db), `tasks`))
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          console.log(snapshot.val());
+          const data = snapshot.val();
+          const filtered_data =  {
+            "todo": {},
+            "in_progress": {},
+            "done": {}
+          }
+          Object.keys(data).forEach(key => {
+            const item = data[key];
+            filtered_data[item['status']][key] = item;
+          })
+          console.log(filtered_data);
+          setTasksList(filtered_data);
+        } else {
+          console.log("No data available");
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
+  useEffect(() => {
+    getTasksList();
+  }, [])
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <main>
+      <div className='d-flex'>
+        <div className='col-3 mx-3'>
+          <div className='bg-primary px-3 py-2 rounded'>TODO</div>
+          <div>
+            {Object.keys(tasksList["todo"]).map(key => {
+              return <TaskCard key={key} props={{...tasksList["todo"][key], ['key']: key}}></TaskCard>
+            })}
+          </div>
+        </div>
+        <div className='col-3 mx-3'>
+          <div className='bg-warning px-3 py-2 rounded'>In Progress</div>
+          <div>
+          {Object.keys(tasksList["in_progress"]).map(key => {
+              return <TaskCard key={key} props={{...tasksList["in_progress"][key], ['key']: key}}></TaskCard>
+            })}
+          </div>
+        </div>
+        <div className='col-3 mx-3'>
+          <div className='bg-success px-3 py-2 rounded'>Done</div>
+          <div>
+          {Object.keys(tasksList["done"]).map(key => {
+              return <TaskCard key={key} props={{...tasksList["done"][key], ['key']: key}}></TaskCard>
+            })}
+          </div>
+        </div>
+        <div className='col-3 mx-3'>
+          <Link href={"/tasks/create"} className="btn btn-dark rounded">Add new task +</Link>
         </div>
       </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
     </main>
-  );
+  )
 }
+
